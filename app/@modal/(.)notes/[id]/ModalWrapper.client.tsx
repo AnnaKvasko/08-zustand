@@ -82,3 +82,12 @@
 //     </div>
 //   );
 // }
+"use client";
+
+export default function ModalWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
+}
