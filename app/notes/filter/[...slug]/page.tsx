@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { TAGS } from "@/types/note";
 import {
   HydrationBoundary,
   QueryClient,
@@ -6,6 +8,47 @@ import {
 import { fetchNotes } from "@/lib/api";
 import type { NotesListResponse } from "@/lib/types";
 import NotesClient from "./Notes.client";
+
+const SITE_URL = "https://notehub.example.com";
+const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug?: string[] };
+}): Promise<Metadata> {
+  const rawTag = params.slug?.[0] ?? "all";
+
+  const validTag = (TAGS as readonly string[]).includes(rawTag as any)
+    ? rawTag
+    : "all";
+
+  const title =
+    validTag === "all" ? "Notes — All Notes" : `Notes — Filter: ${validTag}`;
+
+  const description =
+    validTag === "all"
+      ? "Browse all your notes."
+      : `Browse your notes filtered by tag: ${validTag}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/notes/filter/${validTag}`,
+      images: [
+        {
+          url: OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: "NoteHub OG Image",
+        },
+      ],
+    },
+  };
+}
 
 export default async function NotesPage({
   params,
