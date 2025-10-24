@@ -1,42 +1,72 @@
-// import {
-//   HydrationBoundary,
-//   QueryClient,
-//   dehydrate,
-// } from "@tanstack/react-query";
-// import { notFound } from "next/navigation";
-// import { fetchNoteById } from "@/lib/api";
-// import NoteDetailsClient from "@/app/notes/[id]/NoteDetails.client";
-// import { isAxiosError } from "axios";
-// import type { Note } from "@/types/note";
-// import ModalWrapper from "@/app/@modal/(.)notes/[id]/ModalWrapper.client";
+"use client";
 
-// type PageProps = { params: Promise<{ id: string }> };
+import { use } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { fetchNoteById } from "@/lib/api";
+import type { Note } from "@/types/note";
+import ModalWrapper from "./ModalWrapper.client";
+import css from "./Modal.module.css";
 
-// export default async function InterceptedNoteModal({ params }: PageProps) {
-//   const { id } = await params;
-//   if (!id) notFound();
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
-//   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+export default function InterceptedNoteModal({ params }: PageProps) {
+  const { id } = use(params);
 
-//   try {
-//     await qc.prefetchQuery<Note>({
-//       queryKey: ["note", id],
-//       queryFn: ({ signal }) => fetchNoteById(id, signal),
-//       staleTime: 30_000,
-//     });
-//   } catch (e) {
-//     if (isAxiosError(e) && e.response?.status === 404) notFound();
-//     throw e;
-//   }
+  const router = useRouter();
 
-//   return (
-//     <ModalWrapper>
-//       <HydrationBoundary state={dehydrate(qc)}>
-//         <NoteDetailsClient id={id} />
-//       </HydrationBoundary>
-//     </ModalWrapper>
-//   );
-// }
-export default function Page() {
-  return null;
+  const { data, isLoading, isError } = useQuery<Note>({
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteById(id),
+  });
+
+  if (isLoading) {
+    return (
+      <ModalWrapper>
+        <p className={css.loading}>Loading…</p>
+        <button
+          type="button"
+          className={css.closeBtn}
+          onClick={() => router.back()}
+        >
+          Close
+        </button>
+      </ModalWrapper>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <ModalWrapper>
+        <p className={css.error}>Failed to load note.</p>
+        <button
+          type="button"
+          className={css.closeBtn}
+          onClick={() => router.back()}
+        >
+          Close
+        </button>
+      </ModalWrapper>
+    );
+  }
+
+  return (
+    <ModalWrapper>
+      <h2 className={css.title}>{data.title}</h2>
+
+      <p className={css.tag}>{data.tag}</p>
+
+      <p className={css.content}>{data.content}</p>
+
+      <button
+        type="button"
+        className={css.closeBtn}
+        onClick={() => router.back()}
+      >
+        Close
+      </button>
+    </ModalWrapper>
+  );
 }

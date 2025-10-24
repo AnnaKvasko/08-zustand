@@ -1,52 +1,53 @@
-import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
-
-import Header from "@/components/Header/Header";
-import Footer from "@/components/Footer/Footer";
-import TanStackProvider from "@/components/TanStackProvider/TanStackProvider";
+import { Roboto } from "next/font/google";
+import type { Metadata } from "next";
+import QueryProvider from "@/app/providers/QueryProvider";
+import Header from "@/components/Header/Header"; // 👉 додали хедер
 
 const roboto = Roboto({
-  weight: ["300", "400", "500", "700"],
-  subsets: ["latin", "cyrillic"],
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
   display: "swap",
   variable: "--font-roboto",
 });
 
-const SITE_URL = "https://example.com"; // заміни на реальний домен свого Vercel-деплою
-const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
-
 export const metadata: Metadata = {
   title: "NoteHub",
   description:
-    "NoteHub — простий застосунок для створення й організації нотаток.",
+    "NoteHub is a simple and efficient app for creating, browsing and organizing personal notes.",
   openGraph: {
     title: "NoteHub",
     description:
-      "NoteHub — простий застосунок для створення й організації нотаток.",
-    url: SITE_URL,
-    images: [{ url: OG_IMAGE }],
-    siteName: "NoteHub",
-    type: "website",
+      "NoteHub is a simple and efficient app for creating, browsing and organizing personal notes.",
+    url: "https://ac.goit.global/fullstack/react/notehub",
+    images: [
+      {
+        url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+        width: 1200,
+        height: 630,
+        alt: "NoteHub OG Image",
+      },
+    ],
   },
-  metadataBase: new URL(SITE_URL),
 };
 
 export default function RootLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
   return (
-    <html lang="uk" className={roboto.variable}>
+    <html lang="en" className={roboto.variable}>
       <body>
-        <TanStackProvider>
+        <QueryProvider>
           <Header />
-          <main id="main" role="main">
-            {children}
-          </main>
-          <Footer />
-        </TanStackProvider>
+
+          <main>{children}</main>
+
+          {modal}
+        </QueryProvider>
       </body>
     </html>
   );

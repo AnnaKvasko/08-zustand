@@ -1,64 +1,43 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { NoteTag } from "@/types/note";
 
-export type Draft = {
+type DraftState = {
   title: string;
   content: string;
   tag: NoteTag;
 };
 
-export const initialDraft: Draft = {
-  title: "",
-  content: "",
-  tag: "Todo",
-};
-
-// type NoteState = {
-//   draft: Draft;
-//   setDraft: (partial: Partial<Draft>) => void;
-//   clearDraft: () => void;
-// };
-
-// export const useNoteStore = create<NoteState>()(
-//   persist(
-//     (set, get) => ({
-//       draft: initialDraft,
-//       setDraft: (partial) => set({ draft: { ...get().draft, ...partial } }),
-//       clearDraft: () => set({ draft: initialDraft }),
-//     }),
-//     {
-//       name: "notehub-draft",
-//       partialize: (state) => ({ draft: state.draft }),
-//     }
-//   )
-// );
-// ...
-type NoteState = {
-  draft: Draft;
-  setDraft: (partial: Partial<Draft>) => void;
+interface NoteStore {
+  draft: DraftState;
+  setDraft: (data: Partial<DraftState>) => void;
   clearDraft: () => void;
-  hasHydrated: boolean;
-  setHasHydrated: (v: boolean) => void;
-};
+}
 
-export const useNoteStore = create<NoteState>()(
+export const useNoteStore = create<NoteStore>()(
   persist(
-    (set, get) => ({
-      draft: initialDraft,
-      setDraft: (partial) => set({ draft: { ...get().draft, ...partial } }),
-      clearDraft: () => set({ draft: initialDraft }),
-      hasHydrated: false,
-      setHasHydrated: (v) => set({ hasHydrated: v }),
+    (set) => ({
+      draft: {
+        title: "",
+        content: "",
+        tag: "Todo",
+      },
+      setDraft: (data) =>
+        set((state) => ({
+          draft: { ...state.draft, ...data },
+        })),
+      clearDraft: () =>
+        set(() => ({
+          draft: { title: "", content: "", tag: "Todo" },
+        })),
     }),
     {
-      name: "notehub-draft",
+      name: "note-draft",
+      storage: createJSONStorage(() => localStorage),
+
       partialize: (state) => ({ draft: state.draft }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
     }
   )
 );

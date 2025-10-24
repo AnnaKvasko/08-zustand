@@ -50,7 +50,6 @@ export default function NotesClient({
     return `/notes`;
   }, [currentTag]);
 
-  
   const lastSyncRef = useRef<{ p: number; s: string } | null>(null);
   useEffect(() => {
     const pNum = Number(qpPage);
@@ -74,7 +73,6 @@ export default function NotesClient({
     [page, debouncedSearch, perPage, tag]
   );
 
- 
   const baseParams = { page, perPage, search: debouncedSearch || undefined };
   const paramsFetch = tag ? { ...baseParams, tag } : baseParams;
 
@@ -100,17 +98,14 @@ export default function NotesClient({
     return 1;
   }, [data, perPage, items.length, page]);
 
-  
   useEffect(() => {
     setPage((prev) => (prev !== 1 ? 1 : prev));
   }, [debouncedSearch, tag]);
 
-  
   useEffect(() => {
     if (page > pages) setPage(pages);
   }, [pages, page]);
 
- 
   useEffect(() => {
     const sp = new URLSearchParams();
     if (page !== 1) sp.set("page", String(page));
@@ -137,7 +132,11 @@ export default function NotesClient({
   const onSearchChange = (value: string): void => setSearch(value);
 
   return (
-    <div className={css.app} aria-busy={isFetching && !isLoading}>
+    <div
+      className={css.app}
+      aria-busy={isFetching && !isLoading}
+      suppressHydrationWarning
+    >
       <header className={css.toolbar}>
         <div className={css.leftBlock}>
           <SearchBox value={search} onChange={onSearchChange} />
