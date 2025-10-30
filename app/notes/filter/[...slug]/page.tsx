@@ -15,17 +15,17 @@ const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
 export async function generateMetadata({
   params,
 }: {
-  params: { slug?: string[] };
+  params: Promise<{ slug?: string[] }>;
 }): Promise<Metadata> {
-  const rawTag = params.slug?.[0] ?? "all";
+  const { slug } = await params;
 
+  const rawTag = slug?.[0] ?? "all";
   const validTag = (TAGS as readonly string[]).includes(rawTag as any)
     ? rawTag
     : "all";
 
   const title =
     validTag === "all" ? "Notes — All Notes" : `Notes — Filter: ${validTag}`;
-
   const description =
     validTag === "all"
       ? "Browse all your notes."
@@ -39,12 +39,7 @@ export async function generateMetadata({
       description,
       url: `${SITE_URL}/notes/filter/${validTag}`,
       images: [
-        {
-          url: OG_IMAGE,
-          width: 1200,
-          height: 630,
-          alt: "NoteHub OG Image",
-        },
+        { url: OG_IMAGE, width: 1200, height: 630, alt: "NoteHub OG Image" },
       ],
     },
   };
@@ -54,12 +49,15 @@ export default async function NotesPage({
   params,
   searchParams,
 }: {
-  params: { slug?: string[] };
-  searchParams?: { page?: string; search?: string };
+  params: Promise<{ slug?: string[] }>;
+  searchParams?: Promise<{ page?: string; search?: string }>;
 }) {
-  const tag = params.slug?.[0] ?? "all";
-  const page = Number(searchParams?.page ?? 1);
-  const search = searchParams?.search ?? "";
+  const { slug } = await params;
+  const sp = (await searchParams) ?? {};
+
+  const tag = slug?.[0] ?? "all";
+  const page = Number(sp.page ?? 1);
+  const search = sp.search ?? "";
   const perPage = 12;
 
   const queryClient = new QueryClient();
