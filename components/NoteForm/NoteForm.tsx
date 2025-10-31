@@ -24,7 +24,7 @@ type CreatePayload = {
 export default function NoteForm() {
   const router = useRouter();
   const qc = useQueryClient();
-  const { draft, setDraft, clearDraft } = useNoteStore();
+  const { setDraft, clearDraft } = useNoteStore();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -151,6 +151,7 @@ export default function NoteForm() {
         >
           Cancel
         </button>
+
         <button
           type="submit"
           className={css.submitButton}
