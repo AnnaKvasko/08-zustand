@@ -24,26 +24,37 @@ type CreatePayload = {
 export default function NoteForm() {
   const router = useRouter();
   const qc = useQueryClient();
-
   const { draft, setDraft, clearDraft } = useNoteStore();
 
-  const [title, setTitle] = useState(draft.title);
-  const [content, setContent] = useState(draft.content);
-  const [tag, setTag] = useState<NoteTag>(draft.tag);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tag, setTag] = useState<NoteTag>("Todo");
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    const unsub = useNoteStore.persist.onFinishHydration(() => {
+      const restored = useNoteStore.getState().draft;
+      setTitle(restored.title);
+      setContent(restored.content);
+      setTag(restored.tag);
+      setHydrated(true);
+    });
+
+    if (useNoteStore.persist.hasHydrated()) {
+      const restored = useNoteStore.getState().draft;
+      setTitle(restored.title);
+      setContent(restored.content);
+      setTag(restored.tag);
+      setHydrated(true);
+    }
+
+    return () => unsub?.();
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     setDraft({ title, content, tag });
-  }, [title, content, tag, setDraft]);
-
-  useEffect(() => {
-    if (!mounted) return;
-    if (draft.title !== title) setTitle(draft.title);
-    if (draft.content !== content) setContent(draft.content);
-    if (draft.tag !== tag) setTag(draft.tag);
-  }, [mounted, draft.title, draft.content, draft.tag]);
+  }, [title, content, tag, hydrated, setDraft]);
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: async ({ title, content, tag }: CreatePayload) => {
@@ -59,7 +70,6 @@ export default function NoteForm() {
     },
     onSuccess: async () => {
       clearDraft();
-
       await qc.invalidateQueries({
         predicate: (q) =>
           Array.isArray(q.queryKey) && q.queryKey[0] === "notes",
@@ -70,12 +80,11 @@ export default function NoteForm() {
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
     if (title.trim().length < 3 || content.trim().length === 0) return;
     mutate({ title: title.trim(), content: content.trim(), tag });
   }
 
-  if (!mounted) return null;
+  if (!hydrated) return null;
 
   return (
     <form
@@ -96,7 +105,6 @@ export default function NoteForm() {
           minLength={3}
           maxLength={50}
           className={css.input}
-          suppressHydrationWarning
           disabled={isPending}
         />
       </div>
@@ -112,7 +120,6 @@ export default function NoteForm() {
           maxLength={500}
           required
           className={css.textarea}
-          suppressHydrationWarning
           disabled={isPending}
         />
       </div>
@@ -125,7 +132,6 @@ export default function NoteForm() {
           value={tag}
           onChange={(e) => setTag(e.currentTarget.value as NoteTag)}
           className={css.select}
-          suppressHydrationWarning
           disabled={isPending}
         >
           {TAGS.map((t) => (
@@ -139,7 +145,7 @@ export default function NoteForm() {
       <div className={css.actions}>
         <button
           type="button"
-          className={`${css.button} ${css.cancel}`}
+          className={css.cancelButton}
           onClick={() => router.back()}
           disabled={isPending}
         >
@@ -147,7 +153,7 @@ export default function NoteForm() {
         </button>
         <button
           type="submit"
-          className={css.button}
+          className={css.submitButton}
           disabled={isPending}
           aria-busy={isPending}
         >
@@ -156,7 +162,7 @@ export default function NoteForm() {
       </div>
 
       {isError && (
-        <p role="alert" className={css.hint}>
+        <p role="alert" className={css.error}>
           {(error as Error)?.message ?? "Something went wrong"}
         </p>
       )}
